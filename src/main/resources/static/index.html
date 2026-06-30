@@ -31,8 +31,8 @@
         nav.links { display: flex; align-items: center; gap: 1.5rem; }
         nav.links a.nav { color: var(--ink-soft); font-weight: 500; font-size: 0.95rem; }
         nav.links a.nav:hover { color: var(--ink); }
-        .btn { display: inline-block; font-weight: 600; border-radius: 10px; padding: 0.6rem 1.1rem;
-            border: 1px solid transparent; cursor: pointer; font-size: 0.95rem; }
+        .btn { display: inline-block; font-family: inherit; font-weight: 600; border-radius: 10px;
+            padding: 0.6rem 1.1rem; border: 1px solid transparent; cursor: pointer; font-size: 0.95rem; }
         .btn.primary { background: var(--brand); color: var(--brand-ink); }
         .btn.primary:hover { filter: brightness(1.07); text-decoration: none; }
         .btn.ghost { background: #fff; color: var(--ink); border-color: var(--line); }
@@ -99,6 +99,28 @@
         footer { border-top: 1px solid var(--line); padding: 2rem 0; color: var(--muted); font-size: 0.88rem; }
         .foot-inner { display: flex; justify-content: space-between; flex-wrap: wrap; gap: 0.8rem; }
         .disclaimer { color: var(--muted); font-size: 0.8rem; margin-top: 0.8rem; }
+
+        /* Early-access modal */
+        .modal-overlay { position: fixed; inset: 0; background: rgba(15,23,42,0.55); display: none;
+            align-items: center; justify-content: center; padding: 1.25rem; z-index: 50; }
+        .modal-overlay.open { display: flex; }
+        .modal { background: #fff; border-radius: 18px; padding: 1.8rem; max-width: 26rem; width: 100%;
+            box-shadow: 0 20px 60px rgba(15,23,42,0.25); }
+        .modal h3 { margin: 0 0 0.5rem; font-size: 1.3rem; }
+        .modal p.sub { color: var(--ink-soft); margin: 0 0 1.2rem; font-size: 0.95rem; }
+        .modal input { width: 100%; font: inherit; padding: 0.7rem 0.8rem; border: 1px solid var(--line);
+            border-radius: 10px; outline: none; }
+        .modal input:focus { border-color: var(--brand); box-shadow: 0 0 0 3px rgba(29,78,216,0.12); }
+        .modal .btn { width: 100%; text-align: center; margin-top: 0.8rem; }
+        .modal .msg { min-height: 1.2rem; font-size: 0.88rem; margin: 0.6rem 0 0; }
+        .modal .msg.err { color: var(--bad); }
+        .modal .msg.ok { color: var(--good); }
+        .modal .close { float: right; background: none; border: none; font-size: 1.3rem; cursor: pointer;
+            color: var(--muted); line-height: 1; }
+        .modal .done { text-align: center; padding: 0.5rem 0; }
+        .modal .done .tick { width: 46px; height: 46px; border-radius: 50%; background: var(--good-bg);
+            color: var(--good); display: inline-flex; align-items: center; justify-content: center;
+            font-size: 1.5rem; margin-bottom: 0.6rem; }
     </style>
 </head>
 <body>
@@ -109,7 +131,7 @@
                 <a class="nav" href="#how">How it works</a>
                 <a class="nav" href="#pricing">Pricing</a>
                 <a class="nav" href="/app">Sign in</a>
-                <a class="btn primary" href="/app">Get started</a>
+                <button class="btn primary" type="button" data-cta="nav">Get early access</button>
             </nav>
         </div>
     </header>
@@ -123,10 +145,10 @@
                 <p class="lead">Add the companies you've lent to once. BritIntel watches Companies House for you and
                     emails an alert the instant something risky happens — new charges, director changes, insolvency signs.</p>
                 <div class="cta-row">
-                    <a class="btn primary lg" href="/app">Start watching your loan book</a>
+                    <button class="btn primary lg" type="button" data-cta="hero">Get early access</button>
                     <a class="btn ghost lg" href="#how">See how it works</a>
                 </div>
-                <p class="reassure">No card required to start · Email alerts · A whole-portfolio dashboard</p>
+                <p class="reassure">Early access · We onboard lenders personally · Built on the official Companies House register</p>
             </div>
         </section>
 
@@ -219,7 +241,7 @@
                             <li>Email alerts</li>
                             <li>Portfolio dashboard</li>
                         </ul>
-                        <a class="btn ghost" href="/app">Get started</a>
+                        <button class="btn ghost" type="button" data-cta="pricing-starter">Join the early access list</button>
                     </div>
                     <div class="price featured">
                         <span class="tag">Most popular</span>
@@ -230,7 +252,7 @@
                             <li>Email alerts &amp; risk prioritisation</li>
                             <li>Export for your records</li>
                         </ul>
-                        <a class="btn primary" href="/app">Get started</a>
+                        <button class="btn primary" type="button" data-cta="pricing-pro">Join the early access list</button>
                     </div>
                     <div class="price">
                         <div class="tier">Business</div>
@@ -240,7 +262,7 @@
                             <li>Team seats</li>
                             <li>Custom rules &amp; priority support</li>
                         </ul>
-                        <a class="btn ghost" href="/app">Talk to us</a>
+                        <button class="btn ghost" type="button" data-cta="pricing-business">Join the early access list</button>
                     </div>
                 </div>
                 <p class="disclaimer">Early access: create an account free and start watching today — we onboard the first lenders personally.</p>
@@ -253,7 +275,7 @@
                 <div class="cta-band">
                     <h2>Stop hoping. Start knowing.</h2>
                     <p>Add the companies you've lent to and let BritIntel watch Companies House for you.</p>
-                    <a class="btn primary lg" href="/app">Start watching your loan book</a>
+                    <button class="btn primary lg" type="button" data-cta="final">Get early access</button>
                 </div>
             </div>
         </section>
@@ -265,5 +287,84 @@
             <div>Companies House change monitoring for lenders. &copy; 2026 BritIntel.</div>
         </div>
     </footer>
+
+    <!-- Early-access capture modal -->
+    <div class="modal-overlay" id="ea-overlay">
+        <div class="modal" role="dialog" aria-modal="true" aria-labelledby="ea-title">
+            <button class="close" type="button" id="ea-close" aria-label="Close">&times;</button>
+            <div id="ea-form-wrap">
+                <h3 id="ea-title">Get early access</h3>
+                <p class="sub">Leave your email — we onboard lenders personally and we'll be in touch.</p>
+                <form id="ea-form">
+                    <input id="ea-email" type="email" autocomplete="email" placeholder="you@firm.com" required>
+                    <button class="btn primary" type="submit" id="ea-submit">Request access</button>
+                    <p class="msg" id="ea-msg"></p>
+                </form>
+            </div>
+            <div id="ea-done" class="done" style="display:none;">
+                <div class="tick">✓</div>
+                <h3>You're on the list</h3>
+                <p class="sub">Thanks — we'll be in touch personally. Keep an eye on your inbox.</p>
+            </div>
+        </div>
+    </div>
+
+    <script>
+    (function () {
+        const overlay = document.getElementById('ea-overlay');
+        const form = document.getElementById('ea-form');
+        const email = document.getElementById('ea-email');
+        const msg = document.getElementById('ea-msg');
+        const submit = document.getElementById('ea-submit');
+        const formWrap = document.getElementById('ea-form-wrap');
+        const done = document.getElementById('ea-done');
+        let source = 'unknown';
+
+        function open(src) {
+            source = src || 'unknown';
+            formWrap.style.display = '';
+            done.style.display = 'none';
+            msg.textContent = ''; msg.className = 'msg';
+            form.reset();
+            overlay.classList.add('open');
+            setTimeout(() => email.focus(), 50);
+        }
+        function close() { overlay.classList.remove('open'); }
+
+        document.querySelectorAll('[data-cta]').forEach(function (btn) {
+            btn.addEventListener('click', function () { open(btn.getAttribute('data-cta')); });
+        });
+        document.getElementById('ea-close').addEventListener('click', close);
+        overlay.addEventListener('click', function (e) { if (e.target === overlay) close(); });
+        document.addEventListener('keydown', function (e) {
+            if (e.key === 'Escape') close();
+        });
+
+        form.addEventListener('submit', async function (e) {
+            e.preventDefault();
+            msg.textContent = ''; msg.className = 'msg';
+            submit.disabled = true;
+            try {
+                const res = await fetch('/api/early-access', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ email: email.value.trim(), source: source })
+                });
+                if (!res.ok) {
+                    let m = 'Please enter a valid email address.';
+                    try { m = (await res.json()).message || m; } catch (_) {}
+                    throw new Error(m);
+                }
+                formWrap.style.display = 'none';
+                done.style.display = 'block';
+            } catch (err) {
+                msg.className = 'msg err';
+                msg.textContent = err.message;
+            } finally {
+                submit.disabled = false;
+            }
+        });
+    })();
+    </script>
 </body>
 </html>
