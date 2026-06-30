@@ -36,7 +36,8 @@ public class SecurityConfig {
                         // 404 (e.g. Chrome's speculative /favicon.ico) is forwarded to /error,
                         // blocked by anyRequest().authenticated(), and rewritten to a 401.
                         .dispatcherTypeMatchers(DispatcherType.ERROR).permitAll()
-                        .requestMatchers("/", "/index.html", "/app.js", "/style.css",
+                        // Public marketing landing page + the dashboard SPA shell (its API is guarded).
+                        .requestMatchers("/", "/index.html", "/app", "/app/**",
                                 "/favicon.ico", "/actuator/health").permitAll()
                         .requestMatchers(HttpMethod.POST, "/api/register").permitAll()
                         .anyRequest().authenticated())
@@ -47,14 +48,14 @@ public class SecurityConfig {
                         .ignoringRequestMatchers("/api/register"))
                 .addFilterAfter(new CsrfCookieFilter(), BasicAuthenticationFilter.class)
                 .formLogin(form -> form
-                        // Use our own single page as the login page (no default Spring page).
-                        .loginPage("/")
+                        // The dashboard SPA at /app hosts the login form (landing page owns /).
+                        .loginPage("/app")
                         .loginProcessingUrl("/login")
-                        .defaultSuccessUrl("/", true)
-                        .failureUrl("/?error")
+                        .defaultSuccessUrl("/app", true)
+                        .failureUrl("/app?error")
                         .permitAll())
                 .logout(logout -> logout
-                        .logoutSuccessUrl("/?loggedout")
+                        .logoutSuccessUrl("/app?loggedout")
                         .permitAll())
                 // Return 401 (not a redirect) when an unauthenticated request hits the JSON API.
                 .exceptionHandling(ex -> ex
