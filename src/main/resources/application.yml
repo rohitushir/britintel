@@ -24,27 +24,31 @@ spring:
     locations: classpath:db/migration
     baseline-on-migrate: true
 
+  # SMTP for alert emails. Provider-agnostic: point MAIL_* at any service (AWS SES, Resend,
+  # Postmark, Gmail, ...). Only used when companieswatch.alerts.email.enabled=true; until then
+  # the logging notifier runs and these are inert.
+  mail:
+    host: ${MAIL_HOST:localhost}
+    port: ${MAIL_PORT:587}
+    username: ${MAIL_USERNAME:}
+    password: ${MAIL_PASSWORD:}
+    properties:
+      mail.smtp.auth: ${MAIL_SMTP_AUTH:true}
+      mail.smtp.starttls.enable: ${MAIL_SMTP_STARTTLS:true}
+      mail.smtp.connectiontimeout: 5000
+      mail.smtp.timeout: 5000
+      mail.smtp.writetimeout: 5000
+
 server:
   port: ${SERVER_PORT:8080}
 
-# Alerts. v1 ships with email as the only channel. Until a provider is chosen, the logging
-# notifier is active; set email.enabled=true and configure spring.mail.* to send real email.
+# Alerts. v1 ships with email as the only channel. Set enabled=true and configure the spring.mail.*
+# block above to send real email; otherwise the logging notifier is active.
 companieswatch:
   alerts:
     email:
       enabled: ${ALERTS_EMAIL_ENABLED:false}
       from: ${ALERTS_EMAIL_FROM:alerts@britintel.app}
-
-# spring.mail.* — fill in when an email service is selected (host/port/username/password).
-# spring:
-#   mail:
-#     host: ${MAIL_HOST:}
-#     port: ${MAIL_PORT:587}
-#     username: ${MAIL_USERNAME:}
-#     password: ${MAIL_PASSWORD:}
-#     properties:
-#       mail.smtp.auth: true
-#       mail.smtp.starttls.enable: true
 
 management:
   endpoints:
@@ -54,6 +58,11 @@ management:
   endpoint:
     health:
       show-details: when-authorized
+  health:
+    # Alerts are async best-effort; don't gate app health on the SMTP provider being reachable
+    # (and don't let the actuator probe SMTP on every health check).
+    mail:
+      enabled: false
 
 # Placeholders for config wired up in later build steps (kept here so the seams are visible).
 companieshouse:

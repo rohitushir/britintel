@@ -34,6 +34,15 @@ services:
       CH_REST_BASE_URL: ${CH_REST_BASE_URL:-https://api.company-information.service.gov.uk}
       CH_STREAM_NAMES: ${CH_STREAM_NAMES:-companies}
       CH_STREAM_FLUSH_EVERY: ${CH_STREAM_FLUSH_EVERY:-25}
+      # Email alerts — logging notifier runs until ALERTS_EMAIL_ENABLED=true + MAIL_* are set.
+      ALERTS_EMAIL_ENABLED: ${ALERTS_EMAIL_ENABLED:-false}
+      ALERTS_EMAIL_FROM: ${ALERTS_EMAIL_FROM:-alerts@britintel.app}
+      MAIL_HOST: ${MAIL_HOST:-localhost}
+      MAIL_PORT: ${MAIL_PORT:-587}
+      MAIL_USERNAME: ${MAIL_USERNAME:-}
+      MAIL_PASSWORD: ${MAIL_PASSWORD:-}
+      MAIL_SMTP_AUTH: ${MAIL_SMTP_AUTH:-true}
+      MAIL_SMTP_STARTTLS: ${MAIL_SMTP_STARTTLS:-true}
     ports:
       - "8080:8080"
 
