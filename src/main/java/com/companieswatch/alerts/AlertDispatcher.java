@@ -55,6 +55,7 @@ public class AlertDispatcher {
     private void dispatch(User user, String subject, String body) {
         try {
             notifier.send(user.getEmail(), subject, body);
+            log.info("Alert sent to {}: {}", user.getEmail(), subject);
         } catch (Exception e) {
             // Don't let one failed send abort the rest; log for retry/observability.
             log.error("Failed to send alert to {}: {}", user.getEmail(), e.toString());

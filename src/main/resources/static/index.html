@@ -169,8 +169,14 @@
             </div>
 
             <div class="card">
-                <h2>Recent events</h2>
-                <p class="sub">Alerts appear here the moment a watched company changes on Companies House.</p>
+                <div class="spread">
+                    <div>
+                        <h2>Recent events</h2>
+                        <p class="sub">Alerts appear here the moment a watched company changes on Companies House.</p>
+                    </div>
+                    <button class="ghost" id="test-alert-btn" type="button" title="Send yourself a sample alert email to confirm delivery">Send test alert</button>
+                </div>
+                <p class="msg" id="test-alert-msg"></p>
                 <table>
                     <thead><tr><th>When</th><th>Company</th><th>Event</th><th>Detail</th></tr></thead>
                     <tbody id="events"></tbody>
