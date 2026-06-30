@@ -43,6 +43,7 @@ services:
       MAIL_PASSWORD: ${MAIL_PASSWORD:-}
       MAIL_SMTP_AUTH: ${MAIL_SMTP_AUTH:-true}
       MAIL_SMTP_STARTTLS: ${MAIL_SMTP_STARTTLS:-true}
+      MAIL_SMTP_SSL: ${MAIL_SMTP_SSL:-false}
     ports:
       - "8080:8080"
 
