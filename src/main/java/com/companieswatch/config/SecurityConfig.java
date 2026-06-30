@@ -1,5 +1,6 @@
 package com.companieswatch.config;
 
+import jakarta.servlet.DispatcherType;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.http.HttpMethod;
@@ -31,6 +32,10 @@ public class SecurityConfig {
 
         http
                 .authorizeHttpRequests(auth -> auth
+                        // Let the container's internal ERROR dispatch render normally; otherwise a
+                        // 404 (e.g. Chrome's speculative /favicon.ico) is forwarded to /error,
+                        // blocked by anyRequest().authenticated(), and rewritten to a 401.
+                        .dispatcherTypeMatchers(DispatcherType.ERROR).permitAll()
                         .requestMatchers("/", "/index.html", "/app.js", "/style.css",
                                 "/favicon.ico", "/actuator/health").permitAll()
                         .requestMatchers(HttpMethod.POST, "/api/register").permitAll()

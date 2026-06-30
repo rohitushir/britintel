@@ -19,7 +19,7 @@ public class EmailAlertNotifier implements AlertNotifier {
 
     public EmailAlertNotifier(JavaMailSender mailSender,
                               @org.springframework.beans.factory.annotation.Value(
-                                      "${companieswatch.alerts.email.from:alerts@companieswatch.app}")
+                                      "${companieswatch.alerts.email.from:alerts@britintel.app}")
                               String fromAddress) {
         this.mailSender = mailSender;
         this.fromAddress = fromAddress;

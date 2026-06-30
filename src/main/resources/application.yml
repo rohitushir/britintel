@@ -33,7 +33,7 @@ companieswatch:
   alerts:
     email:
       enabled: ${ALERTS_EMAIL_ENABLED:false}
-      from: ${ALERTS_EMAIL_FROM:alerts@companieswatch.app}
+      from: ${ALERTS_EMAIL_FROM:alerts@britintel.app}
 
 # spring.mail.* — fill in when an email service is selected (host/port/username/password).
 # spring:

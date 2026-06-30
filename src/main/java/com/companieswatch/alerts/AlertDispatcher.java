@@ -63,7 +63,7 @@ public class AlertDispatcher {
 
     private String subject(RelevantChangeEvent e) {
         String name = e.companyName() != null ? e.companyName() : e.companyNumber();
-        return "[CompaniesWatch] " + e.eventType().name().replace('_', ' ').toLowerCase()
+        return "[BritIntel] " + e.eventType().name().replace('_', ' ').toLowerCase()
                 + " — " + name;
     }
 

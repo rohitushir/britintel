@@ -1,4 +1,4 @@
-# CompaniesWatch
+# BritIntel
 
 B2B monitoring for the UK **Companies House** register. A lender adds the company numbers
 they've lent to; the system watches Companies House and **emails an alert the moment a relevant
