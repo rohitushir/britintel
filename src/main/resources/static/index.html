@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CompaniesWatch</title>
+    <style>
+        :root { --fg: #1a1a1a; --muted: #666; --line: #e2e2e2; --accent: #1d4ed8; --bad: #b91c1c; }
+        body { font-family: system-ui, sans-serif; max-width: 50rem; margin: 2rem auto; padding: 0 1rem; color: var(--fg); }
+        h1 { margin-bottom: 0.2rem; }
+        .muted { color: var(--muted); }
+        section { border: 1px solid var(--line); border-radius: 8px; padding: 1rem 1.25rem; margin: 1rem 0; }
+        input, button { font: inherit; padding: 0.4rem 0.6rem; }
+        button { cursor: pointer; }
+        table { width: 100%; border-collapse: collapse; margin-top: 0.5rem; }
+        th, td { text-align: left; padding: 0.4rem 0.5rem; border-bottom: 1px solid var(--line); font-size: 0.9rem; }
+        .row { display: flex; gap: 0.5rem; align-items: center; flex-wrap: wrap; }
+        .err { color: var(--bad); min-height: 1.2rem; font-size: 0.9rem; }
+        .hidden { display: none; }
+        .pill { font-size: 0.75rem; padding: 0.1rem 0.5rem; border-radius: 999px; background: #eef; }
+        a { color: var(--accent); }
+    </style>
+</head>
+<body>
+    <h1>CompaniesWatch</h1>
+    <p class="muted">Watch Companies House for changes at the companies you've lent to.</p>
+
+    <!-- Logged-out view -->
+    <section id="auth" class="hidden">
+        <h2>Get started</h2>
+        <p class="muted">Already have an account? <a href="/login">Log in</a>.</p>
+        <h3>Register</h3>
+        <div class="row">
+            <input id="reg-email" type="email" placeholder="you@firm.com" autocomplete="email">
+            <input id="reg-password" type="password" placeholder="password (min 8)" autocomplete="new-password">
+            <button id="reg-btn">Create account</button>
+        </div>
+        <p id="reg-msg" class="err"></p>
+    </section>
+
+    <!-- Logged-in view -->
+    <main id="app" class="hidden">
+        <section>
+            <div class="row" style="justify-content: space-between;">
+                <span>Signed in as <strong id="me-email"></strong>
+                    <span class="pill" id="me-usage"></span></span>
+                <button id="logout-btn">Log out</button>
+            </div>
+        </section>
+
+        <section>
+            <h2>Add a company to watch</h2>
+            <div class="row">
+                <input id="add-number" placeholder="e.g. 00000006" maxlength="8">
+                <button id="add-btn">Watch</button>
+            </div>
+            <p id="add-msg" class="err"></p>
+        </section>
+
+        <section>
+            <h2>Watched companies</h2>
+            <table>
+                <thead><tr><th>Number</th><th>Name</th><th>Added</th><th></th></tr></thead>
+                <tbody id="watchlist"></tbody>
+            </table>
+        </section>
+
+        <section>
+            <h2>Recent events</h2>
+            <table>
+                <thead><tr><th>When</th><th>Company</th><th>Type</th><th>Summary</th></tr></thead>
+                <tbody id="events"></tbody>
+            </table>
+            <p class="muted" id="events-empty">No events yet — alerts will appear here once the stream is live.</p>
+        </section>
+    </main>
+
+    <script src="/app.js"></script>
+</body>
+</html>

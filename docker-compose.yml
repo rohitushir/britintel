@@ -1,0 +1,41 @@
+# Local dev stack: app + Postgres. v1 deploys as a single container on a VPS; this compose
+# file is for development. Secrets are passed via environment (never hardcoded).
+services:
+  db:
+    image: postgres:16
+    environment:
+      POSTGRES_DB: companieswatch
+      POSTGRES_USER: companieswatch
+      POSTGRES_PASSWORD: companieswatch
+    ports:
+      # Host port 5544 to avoid clashing with a local Postgres on 5432.
+      - "5544:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U companieswatch"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  app:
+    build: .
+    depends_on:
+      db:
+        condition: service_healthy
+    environment:
+      DB_URL: jdbc:postgresql://db:5432/companieswatch
+      DB_USER: companieswatch
+      DB_PASSWORD: companieswatch
+      # Companies House keys — set these in a local .env or your shell before running.
+      CH_REST_API_KEY: ${CH_REST_API_KEY:-}
+      CH_STREAM_API_KEY: ${CH_STREAM_API_KEY:-}
+      # Optional base-URL override (e.g. point REST at the sandbox host).
+      CH_REST_BASE_URL: ${CH_REST_BASE_URL:-https://api.company-information.service.gov.uk}
+      CH_STREAM_NAMES: ${CH_STREAM_NAMES:-companies}
+      CH_STREAM_FLUSH_EVERY: ${CH_STREAM_FLUSH_EVERY:-25}
+    ports:
+      - "8080:8080"
+
+volumes:
+  pgdata:
