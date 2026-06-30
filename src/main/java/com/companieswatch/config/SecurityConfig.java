@@ -42,10 +42,14 @@ public class SecurityConfig {
                         .ignoringRequestMatchers("/api/register"))
                 .addFilterAfter(new CsrfCookieFilter(), BasicAuthenticationFilter.class)
                 .formLogin(form -> form
+                        // Use our own single page as the login page (no default Spring page).
+                        .loginPage("/")
+                        .loginProcessingUrl("/login")
                         .defaultSuccessUrl("/", true)
+                        .failureUrl("/?error")
                         .permitAll())
                 .logout(logout -> logout
-                        .logoutSuccessUrl("/")
+                        .logoutSuccessUrl("/?loggedout")
                         .permitAll())
                 // Return 401 (not a redirect) when an unauthenticated request hits the JSON API.
                 .exceptionHandling(ex -> ex

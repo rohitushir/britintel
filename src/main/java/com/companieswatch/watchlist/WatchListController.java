@@ -1,10 +1,14 @@
 package com.companieswatch.watchlist;
 
 import com.companieswatch.account.AppUserDetails;
+import com.companieswatch.company.CompanyState;
+import com.companieswatch.company.CompanyStateRepository;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotBlank;
 import java.time.Instant;
 import java.util.List;
+import java.util.Map;
+import java.util.stream.Collectors;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.DeleteMapping;
@@ -21,15 +25,25 @@ import org.springframework.web.bind.annotation.RestController;
 public class WatchListController {
 
     private final WatchListService watchListService;
+    private final CompanyStateRepository companyStateRepository;
 
-    public WatchListController(WatchListService watchListService) {
+    public WatchListController(WatchListService watchListService,
+                              CompanyStateRepository companyStateRepository) {
         this.watchListService = watchListService;
+        this.companyStateRepository = companyStateRepository;
     }
 
     @GetMapping
     public List<WatchedCompanyView> list(@AuthenticationPrincipal AppUserDetails principal) {
-        return watchListService.list(principal.getId()).stream()
-                .map(WatchedCompanyView::of)
+        List<WatchedCompany> watched = watchListService.list(principal.getId());
+        // Batch-load current status for the watched companies so the UI can flag risk.
+        Map<String, String> statusByNumber = companyStateRepository
+                .findAllById(watched.stream().map(WatchedCompany::getCompanyNumber).toList())
+                .stream()
+                .filter(s -> s.getCompanyStatus() != null)
+                .collect(Collectors.toMap(CompanyState::getCompanyNumber, CompanyState::getCompanyStatus));
+        return watched.stream()
+                .map(w -> WatchedCompanyView.of(w, statusByNumber.get(w.getCompanyNumber())))
                 .toList();
     }
 
@@ -37,7 +51,11 @@ public class WatchListController {
     @ResponseStatus(HttpStatus.CREATED)
     public WatchedCompanyView add(@AuthenticationPrincipal AppUserDetails principal,
                                   @Valid @RequestBody AddCompanyRequest request) {
-        return WatchedCompanyView.of(watchListService.add(principal.getId(), request.companyNumber()));
+        WatchedCompany watch = watchListService.add(principal.getId(), request.companyNumber());
+        String status = companyStateRepository.findById(watch.getCompanyNumber())
+                .map(CompanyState::getCompanyStatus)
+                .orElse(null);
+        return WatchedCompanyView.of(watch, status);
     }
 
     @DeleteMapping("/{companyNumber}")
@@ -50,9 +68,11 @@ public class WatchListController {
     public record AddCompanyRequest(@NotBlank String companyNumber) {
     }
 
-    public record WatchedCompanyView(String companyNumber, String companyName, Instant addedAt) {
-        static WatchedCompanyView of(WatchedCompany w) {
-            return new WatchedCompanyView(w.getCompanyNumber(), w.getCompanyName(), w.getCreatedAt());
+    public record WatchedCompanyView(String companyNumber, String companyName, String status,
+                                     Instant addedAt) {
+        static WatchedCompanyView of(WatchedCompany w, String status) {
+            return new WatchedCompanyView(w.getCompanyNumber(), w.getCompanyName(), status,
+                    w.getCreatedAt());
         }
     }
 }
