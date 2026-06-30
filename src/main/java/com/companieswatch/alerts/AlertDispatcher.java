@@ -27,13 +27,16 @@ public class AlertDispatcher {
     private final WatchedCompanyRepository watchedCompanyRepository;
     private final UserRepository userRepository;
     private final AlertNotifier notifier;
+    private final AlertContentFactory contentFactory;
 
     public AlertDispatcher(WatchedCompanyRepository watchedCompanyRepository,
                            UserRepository userRepository,
-                           AlertNotifier notifier) {
+                           AlertNotifier notifier,
+                           AlertContentFactory contentFactory) {
         this.watchedCompanyRepository = watchedCompanyRepository;
         this.userRepository = userRepository;
         this.notifier = notifier;
+        this.contentFactory = contentFactory;
     }
 
     @Async
@@ -43,44 +46,21 @@ public class AlertDispatcher {
         if (watchers.isEmpty()) {
             return;
         }
-        String subject = subject(event);
-        String body = body(event);
+        AlertContent content = contentFactory.render(event);
         for (WatchedCompany watch : watchers) {
             userRepository.findById(watch.getUserId())
                     .filter(User::isEnabled)
-                    .ifPresent(user -> dispatch(user, subject, body));
+                    .ifPresent(user -> dispatch(user, content));
         }
     }
 
-    private void dispatch(User user, String subject, String body) {
+    private void dispatch(User user, AlertContent content) {
         try {
-            notifier.send(user.getEmail(), subject, body);
-            log.info("Alert sent to {}: {}", user.getEmail(), subject);
+            notifier.send(user.getEmail(), content);
+            log.info("Alert sent to {}: {}", user.getEmail(), content.subject());
         } catch (Exception e) {
             // Don't let one failed send abort the rest; log for retry/observability.
             log.error("Failed to send alert to {}: {}", user.getEmail(), e.toString());
         }
-    }
-
-    private String subject(RelevantChangeEvent e) {
-        String name = e.companyName() != null ? e.companyName() : e.companyNumber();
-        return "[BritIntel] " + e.eventType().name().replace('_', ' ').toLowerCase()
-                + " — " + name;
-    }
-
-    private String body(RelevantChangeEvent e) {
-        String name = e.companyName() != null ? e.companyName() : e.companyNumber();
-        return """
-                A change was detected at a company you watch.
-
-                Company: %s (%s)
-                Change:  %s
-                Detail:  %s
-                When:    %s
-
-                View your dashboard: %s
-                """.formatted(
-                name, e.companyNumber(), e.eventType().name(), e.summary(),
-                e.occurredAt(), "/");
     }
 }

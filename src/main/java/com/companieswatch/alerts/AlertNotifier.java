@@ -7,5 +7,5 @@ package com.companieswatch.alerts;
  */
 public interface AlertNotifier {
 
-    void send(String toEmail, String subject, String body);
+    void send(String toEmail, AlertContent content);
 }

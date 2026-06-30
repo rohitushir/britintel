@@ -55,6 +55,10 @@ server:
 # block above to send real email; otherwise the logging notifier is active.
 companieswatch:
   alerts:
+    # Public Companies House site used for the deep link in alert emails.
+    companies-house-base-url: ${COMPANIES_HOUSE_PUBLIC_URL:https://find-and-update.company-information.service.gov.uk}
+    # Absolute base URL of this app, for the "view your dashboard" link in emails (blank = omit).
+    app-base-url: ${APP_BASE_URL:}
     email:
       enabled: ${ALERTS_EMAIL_ENABLED:false}
       from: ${ALERTS_EMAIL_FROM:alerts@britintel.app}

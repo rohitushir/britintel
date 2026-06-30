@@ -1,8 +1,11 @@
 package com.companieswatch.alerts;
 
+import jakarta.mail.MessagingException;
+import jakarta.mail.internet.MimeMessage;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
-import org.springframework.mail.SimpleMailMessage;
+import org.springframework.mail.MailSendException;
 import org.springframework.mail.javamail.JavaMailSender;
+import org.springframework.mail.javamail.MimeMessageHelper;
 import org.springframework.stereotype.Component;
 
 /**
@@ -26,12 +29,18 @@ public class EmailAlertNotifier implements AlertNotifier {
     }
 
     @Override
-    public void send(String toEmail, String subject, String body) {
-        SimpleMailMessage message = new SimpleMailMessage();
-        message.setFrom(fromAddress);
-        message.setTo(toEmail);
-        message.setSubject(subject);
-        message.setText(body);
+    public void send(String toEmail, AlertContent content) {
+        MimeMessage message = mailSender.createMimeMessage();
+        try {
+            // multipart so the plain-text body is the fallback when HTML is blocked.
+            MimeMessageHelper helper = new MimeMessageHelper(message, true, "UTF-8");
+            helper.setFrom(fromAddress);
+            helper.setTo(toEmail);
+            helper.setSubject(content.subject());
+            helper.setText(content.textBody(), content.htmlBody());
+        } catch (MessagingException e) {
+            throw new MailSendException("Failed to build alert email for " + toEmail, e);
+        }
         mailSender.send(message);
     }
 }

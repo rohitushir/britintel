@@ -18,8 +18,8 @@ public class LoggingAlertNotifier implements AlertNotifier {
     private static final Logger log = LoggerFactory.getLogger(LoggingAlertNotifier.class);
 
     @Override
-    public void send(String toEmail, String subject, String body) {
-        log.info("[ALERT → {}] {}", toEmail, subject);
-        log.debug("Alert body to {}:\n{}", toEmail, body);
+    public void send(String toEmail, AlertContent content) {
+        log.info("[ALERT → {}] {}", toEmail, content.subject());
+        log.debug("Alert body to {}:\n{}", toEmail, content.textBody());
     }
 }
