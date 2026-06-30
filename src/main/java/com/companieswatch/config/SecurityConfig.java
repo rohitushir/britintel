@@ -5,22 +5,19 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.http.HttpMethod;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
-import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
-import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
+import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.web.SecurityFilterChain;
-import org.springframework.security.web.authentication.www.BasicAuthenticationFilter;
-import org.springframework.security.web.csrf.CookieCsrfTokenRepository;
-import org.springframework.security.web.csrf.CsrfTokenRequestAttributeHandler;
 
 /**
- * Simple session-based security (mvp-scope.md: "Spring Security, simple").
+ * Stateless security. Authentication is delegated to Clerk: the SPA sends the Clerk session token
+ * as a bearer token, which we validate as a JWT resource server.
  *
  * <ul>
- *   <li>Public: the static dashboard, health, and self-service registration.</li>
- *   <li>Everything else under {@code /api/**} requires an authenticated session.</li>
- *   <li>Login/logout use Spring's built-in form login (default login page) — zero custom UI.</li>
- *   <li>CSRF protection is on, with a JS-readable {@code XSRF-TOKEN} cookie so the single-page
- *       dashboard can send the {@code X-XSRF-TOKEN} header on state-changing calls.</li>
+ *   <li>Public: the marketing landing page ({@code /}), the dashboard SPA shell ({@code /app/**}),
+ *       health, and {@code GET /api/config} (publishable key bootstrap).</li>
+ *   <li>Everything under {@code /api/**} requires a valid Clerk JWT (401 otherwise).</li>
+ *   <li>No sessions, no CSRF — bearer tokens are immune to CSRF and nothing relies on a cookie.</li>
  * </ul>
  */
 @Configuration
@@ -28,47 +25,22 @@ public class SecurityConfig {
 
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
-        CsrfTokenRequestAttributeHandler csrfHandler = new CsrfTokenRequestAttributeHandler();
-
         http
                 .authorizeHttpRequests(auth -> auth
-                        // Let the container's internal ERROR dispatch render normally; otherwise a
-                        // 404 (e.g. Chrome's speculative /favicon.ico) is forwarded to /error,
-                        // blocked by anyRequest().authenticated(), and rewritten to a 401.
+                        // Let the container's internal ERROR dispatch render normally (a 404 must
+                        // not be rewritten into a 401 by anyRequest().authenticated()).
                         .dispatcherTypeMatchers(DispatcherType.ERROR).permitAll()
                         // Public marketing landing page + the dashboard SPA shell (its API is guarded).
                         .requestMatchers("/", "/index.html", "/app", "/app/**",
                                 "/favicon.ico", "/actuator/health").permitAll()
-                        .requestMatchers(HttpMethod.POST, "/api/register").permitAll()
+                        // Public bootstrap: the SPA fetches the Clerk publishable key before sign-in.
+                        .requestMatchers(HttpMethod.GET, "/api/config").permitAll()
                         .anyRequest().authenticated())
-                .csrf(csrf -> csrf
-                        .csrfTokenRepository(CookieCsrfTokenRepository.withHttpOnlyFalse())
-                        .csrfTokenRequestHandler(csrfHandler)
-                        // Registration is a public bootstrap call made before any token exists.
-                        .ignoringRequestMatchers("/api/register"))
-                .addFilterAfter(new CsrfCookieFilter(), BasicAuthenticationFilter.class)
-                .formLogin(form -> form
-                        // The dashboard SPA at /app hosts the login form (landing page owns /).
-                        .loginPage("/app")
-                        .loginProcessingUrl("/login")
-                        .defaultSuccessUrl("/app", true)
-                        .failureUrl("/app?error")
-                        .permitAll())
-                .logout(logout -> logout
-                        .logoutSuccessUrl("/app?loggedout")
-                        .permitAll())
-                // Return 401 (not a redirect) when an unauthenticated request hits the JSON API.
-                .exceptionHandling(ex -> ex
-                        .defaultAuthenticationEntryPointFor(
-                                (request, response, authException) ->
-                                        response.sendError(401, "Unauthorized"),
-                                new org.springframework.security.web.util.matcher.AntPathRequestMatcher("/api/**")));
+                .csrf(AbstractHttpConfigurer::disable)
+                .sessionManagement(sm -> sm.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
+                .oauth2ResourceServer(oauth2 -> oauth2.jwt(jwt -> {
+                }));
 
         return http.build();
-    }
-
-    @Bean
-    public PasswordEncoder passwordEncoder() {
-        return new BCryptPasswordEncoder();
     }
 }

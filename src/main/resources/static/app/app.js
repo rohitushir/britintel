@@ -1,18 +1,53 @@
 'use strict';
 
-// --- CSRF: Spring writes the token to the XSRF-TOKEN cookie; echo it back. ---
-function csrfToken() {
-  const m = document.cookie.match(/(?:^|;\s*)XSRF-TOKEN=([^;]+)/);
-  return m ? decodeURIComponent(m[1]) : '';
+// --- Clerk auth ---------------------------------------------------------------
+let clerk = null;
+let lastSignedIn = null; // de-dupe re-renders from Clerk's listener
+
+async function authToken() {
+  try {
+    return clerk && clerk.session ? await clerk.session.getToken() : null;
+  } catch (_) {
+    return null;
+  }
 }
 
+// Load Clerk's browser SDK using the publishable key + frontend URL from /api/config.
+function loadClerk(cfg) {
+  return new Promise((resolve, reject) => {
+    if (!cfg.publishableKey || !cfg.frontendApiUrl) {
+      reject(new Error('Clerk is not configured on the server.'));
+      return;
+    }
+    const base = cfg.frontendApiUrl.replace(/\/+$/, '');
+    const s = document.createElement('script');
+    s.async = true;
+    s.crossOrigin = 'anonymous';
+    s.setAttribute('data-clerk-publishable-key', cfg.publishableKey);
+    s.src = base + '/npm/@clerk/clerk-js@5/dist/clerk.browser.js';
+    s.addEventListener('load', async () => {
+      try {
+        clerk = window.Clerk;
+        if (!clerk.loaded) await clerk.load();
+        resolve();
+      } catch (e) {
+        reject(e);
+      }
+    });
+    s.addEventListener('error', () => reject(new Error('Could not reach Clerk.')));
+    document.head.appendChild(s);
+  });
+}
+
+// --- API ---------------------------------------------------------------------
 async function api(method, url, body) {
   const opts = { method, headers: {} };
+  const token = await authToken();
+  if (token) opts.headers['Authorization'] = 'Bearer ' + token;
   if (body !== undefined) {
     opts.headers['Content-Type'] = 'application/json';
     opts.body = JSON.stringify(body);
   }
-  if (method !== 'GET') opts.headers['X-XSRF-TOKEN'] = csrfToken();
   return fetch(url, opts);
 }
 
@@ -51,23 +86,35 @@ function eventBadge(type) {
 }
 
 // --- Views ---
-function showLoggedOut() {
-  $('auth').classList.remove('hidden');
+function showSignedOut() {
+  $('signed-out').classList.remove('hidden');
   $('app').classList.add('hidden');
-  $('who').hidden = true;
-  $('login-csrf').value = csrfToken();
-  const p = new URLSearchParams(location.search);
-  if (p.has('error')) showLoginMsg('Incorrect email or password.');
-  if (p.has('loggedout')) showRegMsgOk('');
+  $('clerk-userbutton').classList.add('hidden');
+  const el = $('clerk-signin');
+  el.innerHTML = '';
+  clerk.mountSignIn(el);
 }
 
-async function showLoggedIn(me) {
-  $('auth').classList.add('hidden');
+async function showSignedIn() {
+  $('signed-out').classList.add('hidden');
   $('app').classList.remove('hidden');
-  $('who').hidden = false;
-  $('who-email').textContent = me.email;
-  renderUsage(me);
-  await Promise.all([loadWatchlist(), loadEvents()]);
+  const ub = $('clerk-userbutton');
+  ub.classList.remove('hidden');
+  ub.innerHTML = '';
+  clerk.mountUserButton(ub, { afterSignOutUrl: '/' });
+  try {
+    renderUsage(await apiJson('GET', '/api/me'));
+    await Promise.all([loadWatchlist(), loadEvents()]);
+  } catch (e) {
+    $('add-msg').textContent = e.message;
+  }
+}
+
+function render() {
+  const signedIn = !!(clerk && clerk.user);
+  if (signedIn === lastSignedIn) return; // ignore no-op listener fires
+  lastSignedIn = signedIn;
+  if (signedIn) showSignedIn(); else showSignedOut();
 }
 
 function renderUsage(me) {
@@ -148,57 +195,24 @@ async function removeCompany(number) {
   await Promise.all([loadWatchlist(), refreshUsage()]);
 }
 
-async function register() {
-  const msg = $('reg-msg'); msg.className = 'msg'; msg.textContent = '';
-  try {
-    await apiJson('POST', '/api/register', {
-      email: $('reg-email').value.trim(),
-      password: $('reg-password').value,
-    });
-    msg.className = 'msg ok';
-    msg.textContent = 'Account created — switch to Sign in to continue.';
-    // prefill the login form for convenience
-    $('login-username').value = $('reg-email').value.trim();
-    setTimeout(() => selectTab('login'), 900);
-  } catch (e) {
-    msg.className = 'msg err';
-    msg.textContent = e.message;
-  }
-}
-
-function showLoginMsg(t) { $('login-msg').textContent = t; }
-function showRegMsgOk(t) { const m = $('reg-msg'); m.className = 'msg ok'; m.textContent = t; }
-
-function selectTab(which) {
-  const login = which === 'login';
-  $('tab-login').classList.toggle('active', login);
-  $('tab-register').classList.toggle('active', !login);
-  $('login-form').classList.toggle('hidden', !login);
-  $('register-pane').classList.toggle('hidden', login);
-}
-
-async function logout() {
-  // native form post so Spring clears the session
-  const f = document.createElement('form');
-  f.method = 'post'; f.action = '/logout';
-  const t = document.createElement('input');
-  t.type = 'hidden'; t.name = '_csrf'; t.value = csrfToken();
-  f.appendChild(t); document.body.appendChild(f); f.submit();
-}
-
+// --- Boot --------------------------------------------------------------------
 async function init() {
-  $('tab-login').onclick = () => selectTab('login');
-  $('tab-register').onclick = () => selectTab('register');
-  $('reg-btn').onclick = register;
   $('add-form').onsubmit = addCompany;
   $('test-alert-btn').onclick = sendTestAlert;
-  $('logout-btn').onclick = logout;
-  // ensure the login form carries a fresh CSRF token right before submit
-  $('login-form').addEventListener('submit', () => { $('login-csrf').value = csrfToken(); });
 
-  const res = await api('GET', '/api/me');
-  if (res.ok) showLoggedIn(await res.json());
-  else showLoggedOut();
+  let cfg;
+  try {
+    cfg = await (await fetch('/api/config')).json();
+    await loadClerk(cfg);
+  } catch (e) {
+    $('signed-out').classList.remove('hidden');
+    $('clerk-error').textContent = e.message || 'Sign-in is unavailable right now.';
+    return;
+  }
+
+  render();
+  // Re-render whenever Clerk's auth state changes (sign in / sign out).
+  clerk.addListener(() => render());
 }
 
 init();

@@ -24,6 +24,15 @@ spring:
     locations: classpath:db/migration
     baseline-on-migrate: true
 
+  # Auth is delegated to Clerk: the app is a stateless JWT resource server that validates Clerk
+  # session tokens against the instance's JWKS. jwk-set-uri (vs issuer-uri) is fetched lazily on
+  # first token use, so startup and tests never make a network call to Clerk.
+  security:
+    oauth2:
+      resourceserver:
+        jwt:
+          jwk-set-uri: ${CLERK_FRONTEND_API_URL:https://poetic-monarch-9.clerk.accounts.dev}/.well-known/jwks.json
+
   # SMTP for alert emails. Provider-agnostic: point MAIL_* at any service (AWS SES, Resend,
   # Postmark, Gmail, ...). Only used when companieswatch.alerts.email.enabled=true; until then
   # the logging notifier runs and these are inert.
@@ -34,9 +43,7 @@ spring:
     password: ${MAIL_PASSWORD:}
     properties:
       mail.smtp.auth: ${MAIL_SMTP_AUTH:true}
-      # Port 587 → STARTTLS=true, SSL=false. Port 465 → SSL=true, STARTTLS=false.
       mail.smtp.starttls.enable: ${MAIL_SMTP_STARTTLS:true}
-      mail.smtp.ssl.enable: ${MAIL_SMTP_SSL:false}
       mail.smtp.connectiontimeout: 5000
       mail.smtp.timeout: 5000
       mail.smtp.writetimeout: 5000
@@ -51,6 +58,14 @@ companieswatch:
     email:
       enabled: ${ALERTS_EMAIL_ENABLED:false}
       from: ${ALERTS_EMAIL_FROM:alerts@britintel.app}
+
+# Clerk hosted auth. Publishable key + frontend URL are public (served to the SPA at /api/config);
+# the secret key is used server-side to look up a user's email on first sign-in.
+clerk:
+  publishable-key: ${CLERK_PUBLISHABLE_KEY:}
+  secret-key: ${CLERK_SECRET_KEY:}
+  frontend-api-url: ${CLERK_FRONTEND_API_URL:}
+  api-base-url: ${CLERK_API_BASE_URL:https://api.clerk.com/v1}
 
 management:
   endpoints:

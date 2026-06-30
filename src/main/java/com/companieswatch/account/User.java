@@ -23,7 +23,12 @@ public class User {
     @Column(nullable = false)
     private String email;
 
-    @Column(name = "password_hash", nullable = false)
+    /** Clerk user id (the session token's {@code sub}); the identity key now that Clerk owns auth. */
+    @Column(name = "clerk_user_id")
+    private String clerkUserId;
+
+    /** Legacy local-password column; unused now that auth is delegated to Clerk. */
+    @Column(name = "password_hash")
     private String passwordHash;
 
     /** Per-account cap on number of watched companies (pricing tiers; no billing in v1). */
@@ -40,9 +45,10 @@ public class User {
         // for JPA
     }
 
-    public User(String email, String passwordHash) {
+    /** Provision a Clerk-backed account. */
+    public User(String email, String clerkUserId) {
         this.email = email;
-        this.passwordHash = passwordHash;
+        this.clerkUserId = clerkUserId;
     }
 
     @PrePersist
@@ -62,6 +68,14 @@ public class User {
 
     public void setEmail(String email) {
         this.email = email;
+    }
+
+    public String getClerkUserId() {
+        return clerkUserId;
+    }
+
+    public void setClerkUserId(String clerkUserId) {
+        this.clerkUserId = clerkUserId;
     }
 
     public String getPasswordHash() {
