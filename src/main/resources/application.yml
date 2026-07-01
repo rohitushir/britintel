@@ -100,7 +100,7 @@ companieshouse:
     api-key: ${CH_STREAM_API_KEY:}
     enabled: ${CH_STREAM_ENABLED:true}
     # Max 2 (Companies House connection cap). v1 default is one: company profile.
-    streams: ${CH_STREAM_NAMES:companies}
+    streams: ${CH_STREAM_NAMES:companies,charges}
     reconnect-base-delay-millis: 1000
     reconnect-max-delay-millis: 60000
     flush-every: ${CH_STREAM_FLUSH_EVERY:25}

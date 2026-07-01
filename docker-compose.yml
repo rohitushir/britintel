@@ -32,7 +32,7 @@ services:
       CH_STREAM_API_KEY: ${CH_STREAM_API_KEY:-}
       # Optional base-URL override (e.g. point REST at the sandbox host).
       CH_REST_BASE_URL: ${CH_REST_BASE_URL:-https://api.company-information.service.gov.uk}
-      CH_STREAM_NAMES: ${CH_STREAM_NAMES:-companies}
+      CH_STREAM_NAMES: ${CH_STREAM_NAMES:-companies,charges}
       CH_STREAM_FLUSH_EVERY: ${CH_STREAM_FLUSH_EVERY:-25}
       # Email alerts — logging notifier runs until ALERTS_EMAIL_ENABLED=true + MAIL_* are set.
       ALERTS_EMAIL_ENABLED: ${ALERTS_EMAIL_ENABLED:-false}
