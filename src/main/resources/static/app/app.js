@@ -166,21 +166,6 @@ async function refreshUsage() {
   try { renderUsage(await apiJson('GET', '/api/me')); } catch (_) {}
 }
 
-async function sendTestAlert() {
-  const msg = $('test-alert-msg'); msg.className = 'msg'; msg.textContent = '';
-  const btn = $('test-alert-btn'); btn.disabled = true;
-  try {
-    const res = await apiJson('POST', '/api/test-alert');
-    msg.className = 'msg ok';
-    msg.textContent = `Test alert sent to ${res.sentTo} — check your inbox in a moment.`;
-  } catch (e) {
-    msg.className = 'msg err';
-    msg.textContent = e.message;
-  } finally {
-    btn.disabled = false;
-  }
-}
-
 async function addCompany(ev) {
   ev.preventDefault();
   $('add-msg').textContent = '';
@@ -204,7 +189,6 @@ async function removeCompany(number) {
 // --- Boot --------------------------------------------------------------------
 async function init() {
   $('add-form').onsubmit = addCompany;
-  $('test-alert-btn').onclick = sendTestAlert;
 
   let cfg;
   try {
