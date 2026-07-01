@@ -35,8 +35,6 @@ public class SecurityConfig {
                                 "/favicon.ico", "/actuator/health").permitAll()
                         // Public bootstrap: the SPA fetches the Clerk publishable key before sign-in.
                         .requestMatchers(HttpMethod.GET, "/api/config").permitAll()
-                        // Public landing-page email capture (demand signal).
-                        .requestMatchers(HttpMethod.POST, "/api/early-access").permitAll()
                         .anyRequest().authenticated())
                 .csrf(AbstractHttpConfigurer::disable)
                 .sessionManagement(sm -> sm.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
