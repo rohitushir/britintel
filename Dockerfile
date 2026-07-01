@@ -13,6 +13,11 @@ RUN mvn -B clean package -DskipTests
 FROM eclipse-temurin:21-jre
 WORKDIR /app
 
+# curl for the container healthcheck; drop the apt cache to keep the layer small.
+RUN apt-get update \
+    && apt-get install -y --no-install-recommends curl \
+    && rm -rf /var/lib/apt/lists/*
+
 # Run as a non-root user.
 RUN useradd --system --uid 1001 appuser
 USER appuser
@@ -20,4 +25,10 @@ USER appuser
 COPY --from=build /build/target/companieswatch-*.jar app.jar
 
 EXPOSE 8080
-ENTRYPOINT ["java", "-jar", "app.jar"]
+
+# Report readiness/liveness to the orchestrator via the actuator health endpoint.
+HEALTHCHECK --interval=15s --timeout=3s --start-period=45s --retries=3 \
+    CMD curl -fsS http://localhost:8080/actuator/health || exit 1
+
+# MaxRAMPercentage lets the JVM use most of a small VPS's RAM (container default is only ~25%).
+ENTRYPOINT ["java", "-XX:MaxRAMPercentage=75.0", "-jar", "app.jar"]

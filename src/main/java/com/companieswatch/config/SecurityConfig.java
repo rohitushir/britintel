@@ -1,12 +1,16 @@
 package com.companieswatch.config;
 
 import jakarta.servlet.DispatcherType;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.http.HttpMethod;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
 import org.springframework.security.config.http.SessionCreationPolicy;
+import org.springframework.security.oauth2.jwt.JwtDecoder;
+import org.springframework.security.oauth2.jwt.JwtValidators;
+import org.springframework.security.oauth2.jwt.NimbusJwtDecoder;
 import org.springframework.security.web.SecurityFilterChain;
 
 /**
@@ -42,5 +46,19 @@ public class SecurityConfig {
                 }));
 
         return http.build();
+    }
+
+    /**
+     * Validates Clerk session tokens: signature against the instance JWKS (fetched lazily), plus
+     * the standard timestamp checks and the issuer (so only tokens from our Clerk instance pass).
+     */
+    @Bean
+    public JwtDecoder jwtDecoder(
+            @Value("${clerk.frontend-api-url:https://poetic-monarch-9.clerk.accounts.dev}") String frontendApiUrl) {
+        String issuer = frontendApiUrl.replaceAll("/+$", "");
+        NimbusJwtDecoder decoder = NimbusJwtDecoder
+                .withJwkSetUri(issuer + "/.well-known/jwks.json").build();
+        decoder.setJwtValidator(JwtValidators.createDefaultWithIssuer(issuer));
+        return decoder;
     }
 }

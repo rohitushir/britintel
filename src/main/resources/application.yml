@@ -4,6 +4,10 @@ spring:
   application:
     name: companieswatch
 
+  # Let in-flight requests finish and the streaming worker close cleanly on shutdown.
+  lifecycle:
+    timeout-per-shutdown-phase: 20s
+
   datasource:
     url: ${DB_URL:jdbc:postgresql://localhost:5432/companieswatch}
     username: ${DB_USER:companieswatch}
@@ -24,14 +28,9 @@ spring:
     locations: classpath:db/migration
     baseline-on-migrate: true
 
-  # Auth is delegated to Clerk: the app is a stateless JWT resource server that validates Clerk
-  # session tokens against the instance's JWKS. jwk-set-uri (vs issuer-uri) is fetched lazily on
-  # first token use, so startup and tests never make a network call to Clerk.
-  security:
-    oauth2:
-      resourceserver:
-        jwt:
-          jwk-set-uri: ${CLERK_FRONTEND_API_URL:https://poetic-monarch-9.clerk.accounts.dev}/.well-known/jwks.json
+  # Auth is delegated to Clerk. The JWT decoder (JWKS lookup + issuer validation) is built in
+  # SecurityConfig from clerk.frontend-api-url, so it validates the token issuer, not just the
+  # signature. JWKS is fetched lazily, so startup and tests make no network call to Clerk.
 
   # SMTP for alert emails. Provider-agnostic: point MAIL_* at any service (AWS SES, Resend,
   # Postmark, Gmail, ...). Only used when companieswatch.alerts.email.enabled=true; until then
@@ -52,6 +51,11 @@ spring:
 
 server:
   port: ${SERVER_PORT:8080}
+  # Behind a TLS-terminating reverse proxy, derive scheme/host from X-Forwarded-* headers so
+  # OAuth redirects and absolute URLs use https and the real host.
+  forward-headers-strategy: framework
+  # Finish in-flight requests before exiting (paired with spring.lifecycle timeout above).
+  shutdown: graceful
 
 # Alerts. v1 ships with email as the only channel. Set enabled=true and configure the spring.mail.*
 # block above to send real email; otherwise the logging notifier is active.

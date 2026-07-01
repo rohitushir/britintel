@@ -1,0 +1,13 @@
+# Keep the build context small and never ship secrets or local artifacts into the image.
+.git
+.gitignore
+target
+.env
+*.env
+.gstack
+.idea
+.vscode
+*.iml
+docs
+README.md
+*.md

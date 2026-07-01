@@ -3,13 +3,15 @@
 services:
   db:
     image: postgres:16
+    restart: unless-stopped
     environment:
       POSTGRES_DB: companieswatch
       POSTGRES_USER: companieswatch
       POSTGRES_PASSWORD: companieswatch
     ports:
-      # Host port 5544 to avoid clashing with a local Postgres on 5432.
-      - "5544:5432"
+      # Bound to localhost only — the DB must never be reachable from the internet.
+      # (Handy for local `mvn test`; on a single-host prod deploy you can drop this entirely.)
+      - "127.0.0.1:5544:5432"
     volumes:
       - pgdata:/var/lib/postgresql/data
     healthcheck:
@@ -20,6 +22,7 @@ services:
 
   app:
     build: .
+    restart: unless-stopped
     depends_on:
       db:
         condition: service_healthy
