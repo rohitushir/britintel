@@ -27,10 +27,6 @@ public class User {
     @Column(name = "clerk_user_id")
     private String clerkUserId;
 
-    /** Legacy local-password column; unused now that auth is delegated to Clerk. */
-    @Column(name = "password_hash")
-    private String passwordHash;
-
     /** Per-account cap on number of watched companies (pricing tiers; no billing in v1). */
     @Column(name = "company_cap", nullable = false)
     private int companyCap = 50;
@@ -76,14 +72,6 @@ public class User {
 
     public void setClerkUserId(String clerkUserId) {
         this.clerkUserId = clerkUserId;
-    }
-
-    public String getPasswordHash() {
-        return passwordHash;
-    }
-
-    public void setPasswordHash(String passwordHash) {
-        this.passwordHash = passwordHash;
     }
 
     public int getCompanyCap() {

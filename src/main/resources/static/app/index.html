@@ -3,7 +3,8 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>BritIntel</title>
+    <meta name="theme-color" content="#1d4ed8">
+    <title>BritIntel — Dashboard</title>
     <link rel="icon" type="image/svg+xml" href="/favicon.svg">
     <style>
         :root {
@@ -118,7 +119,8 @@
                 <p class="sub">Enter a Companies House number (8 chars, e.g. <span class="mono">00000006</span>).</p>
                 <form id="add-form" class="row">
                     <div class="grow">
-                        <input id="add-number" placeholder="Company number" maxlength="8" autocomplete="off">
+                        <input id="add-number" placeholder="Company number" maxlength="8" autocomplete="off"
+                               spellcheck="false" style="text-transform:uppercase;">
                     </div>
                     <button type="submit" id="add-btn">Watch company</button>
                 </form>

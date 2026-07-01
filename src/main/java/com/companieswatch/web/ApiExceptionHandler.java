@@ -1,6 +1,5 @@
 package com.companieswatch.web;
 
-import com.companieswatch.account.EmailAlreadyExistsException;
 import com.companieswatch.companieshouse.rest.CompaniesHouseException;
 import com.companieswatch.companieshouse.rest.CompanyNotFoundException;
 import com.companieswatch.watchlist.AlreadyWatchingException;
@@ -27,8 +26,8 @@ public class ApiExceptionHandler {
         return status(HttpStatus.NOT_FOUND, e.getMessage());
     }
 
-    @ExceptionHandler({EmailAlreadyExistsException.class, AlreadyWatchingException.class})
-    public ResponseEntity<ApiError> conflict(RuntimeException e) {
+    @ExceptionHandler(AlreadyWatchingException.class)
+    public ResponseEntity<ApiError> conflict(AlreadyWatchingException e) {
         return status(HttpStatus.CONFLICT, e.getMessage());
     }
 
