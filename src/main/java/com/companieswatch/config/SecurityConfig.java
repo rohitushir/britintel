@@ -32,7 +32,7 @@ public class SecurityConfig {
                         .dispatcherTypeMatchers(DispatcherType.ERROR).permitAll()
                         // Public marketing landing page + the dashboard SPA shell (its API is guarded).
                         .requestMatchers("/", "/index.html", "/app", "/app/**",
-                                "/favicon.ico", "/actuator/health").permitAll()
+                                "/favicon.ico", "/favicon.svg", "/actuator/health").permitAll()
                         // Public bootstrap: the SPA fetches the Clerk publishable key before sign-in.
                         .requestMatchers(HttpMethod.GET, "/api/config").permitAll()
                         .anyRequest().authenticated())
