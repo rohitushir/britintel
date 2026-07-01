@@ -92,7 +92,13 @@ function showSignedOut() {
   $('clerk-userbutton').classList.add('hidden');
   const el = $('clerk-signin');
   el.innerHTML = '';
-  clerk.mountSignIn(el);
+  // Always land back on the dashboard after sign-in/up (incl. OAuth full-page redirects),
+  // otherwise Clerk falls back to "/" (the landing page).
+  if (new URLSearchParams(location.search).has('signup')) {
+    clerk.mountSignUp(el, { forceRedirectUrl: '/app', signInForceRedirectUrl: '/app' });
+  } else {
+    clerk.mountSignIn(el, { forceRedirectUrl: '/app', signUpForceRedirectUrl: '/app' });
+  }
 }
 
 async function showSignedIn() {
